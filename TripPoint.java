@@ -4,14 +4,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+
+
 public class TripPoint {
+
 
 	private double lat;	// latitude
 	private double lon;	// longitude
 	private int time;	// time in minutes
 	
 	private static ArrayList<TripPoint> trip;	// ArrayList of every point in a trip
-
+	private static ArrayList<TripPoint> movingTrip; //added
 	// default constructor
 	public TripPoint() {
 		time = 0;
@@ -91,13 +94,13 @@ public class TripPoint {
 	}
 	
 	// finds the total distance traveled over the trip
-	public static double totalDistance() throws FileNotFoundException, IOException {
+	public static double totalDistance() {
 		
 		double distance = 0.0;
 		
-		if (trip.isEmpty()) {
-			readFile("triplog.csv");
-		}
+		//if (trip.isEmpty()) {
+		//	readFile("triplog.csv");
+		//}
 		
 		for (int i = 1; i < trip.size(); ++i) {
 			distance += haversineDistance(trip.get(i-1), trip.get(i));
@@ -142,5 +145,180 @@ public class TripPoint {
 		// close scanner
 		fileScanner.close();
 	}
+	
+	public static int h1StopDetection() {
+		
+		double minutes = 0.6; //km
+		movingTrip = new ArrayList<TripPoint>();
+		int stops = 0;
+		
+		if(trip.size() > 1){
+			movingTrip.add(trip.get(0));
+			
+			for(int i = 1; i < trip.size(); ++i) { // ++i not i++
+				
+				if(haversineDistance(trip.get(i-1), trip.get(i)) <= minutes) {
+					++stops; 
+				}
+				
+				else {
+					movingTrip.add(trip.get(i));
+				}
+			}
+		}
+		
+		return stops;
+	}
 
-}
+	
+	public static int h2StopDetection() { 
+		
+	    movingTrip = new ArrayList<TripPoint>();
+    double minutes = 0.5; //km
+	    int stops = 0;
+//
+//	    for (int i = 0; i < trip.size(); i++) {
+//	        
+//	        boolean isStop = false;
+//	        if (i < trip.size() - 2) {
+//	            
+//	            double[] distances = {haversineDistance(trip.get(i), trip.get(i+1)),
+//	                                  haversineDistance(trip.get(i+1), trip.get(i+2)),
+//	                                  haversineDistance(trip.get(i), trip.get(i+2))};
+//
+//	            int count = 0;
+//	            for (double d : distances) {
+//	                if (d <= minutes) {
+//	                    count++;
+//	                }
+//	            }
+//
+//	            if (count >= 2) {
+//	                isStop = true;
+//	                i += 2; // skip next two points
+//	                stops += 3; // update total stops count
+//	            }
+//	        }
+//
+//	        if (!isStop) {
+//	            movingTrip.add(trip.get(i));
+//	        }
+//	    }
+//	    return stops;
+//	}
+		
+		if(trip.size() > 1){
+			ArrayList<TripPoint> radius = new ArrayList<TripPoint>();
+			boolean inRadius = false; 
+			
+			for(int i = 0; i < trip.size(); ++i) { 
+				
+				if(!inRadius) {
+					
+					int count = 0;
+					
+					if(i < trip.size() - 2) {
+						
+						double[] distances = {haversineDistance(trip.get(i), trip.get(i+1)), 
+								haversineDistance(trip.get(i+1), 
+										trip.get(i+2)), haversineDistance(trip.get(i), 
+												trip.get(i+2))};
+						for(double distance: distances) {
+							if(distance <= minutes) {
+								++count;
+							}
+						}
+					}
+					
+					if(count >= 2) {
+						
+						radius = new ArrayList<TripPoint>();
+						
+						radius.add(trip.get(i));
+						radius.add(trip.get(i+1));
+						radius.add(trip.get(i+2));
+						
+						i += 2; 
+						stops += 3;
+						
+						inRadius = true;
+					}
+					
+					else {
+						movingTrip.add(trip.get(i)); 
+					}
+				}
+				
+				else {
+					
+					if(inRadius(radius, trip.get(i), minutes)) {
+						radius.add(trip.get(i));
+						++stops;
+					}
+					else {
+						inRadius = false; 
+						
+						--i; 
+					}
+				}
+			}		
+		}
+		return stops;
+	}
+	
+	private static boolean inRadius(ArrayList<TripPoint> radius, TripPoint point, double minutes) {
+		for(int i = 0; i < radius.size(); ++i) {
+			if(haversineDistance(radius.get(i), point) <= minutes) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+		
+	public static double movingTime() {
+
+		double movingTime = movingTrip.size();
+		 movingTime = (movingTime - 1) * 5.0 /60.0;
+		 
+		 return movingTime;
+		
+	    
+	}
+	
+	//complete stoppedTime, avgMovingSpeed, getMovingTrip
+	
+	public static double stoppedTime() {
+		
+		return totalTime() - movingTime();
+	}
+	
+	//only problem - blue x
+	public static double avgMovingSpeed() {
+	    double distance = 0.0;
+	    //int timeInMin = 0;
+	    //int count = 0;
+	
+
+		for (int i = 1; i < movingTrip.size(); ++i) {
+			
+			distance += haversineDistance(movingTrip.get(i - 1), movingTrip.get(i));
+		}
+		
+		//distance divided by speed - average 
+		
+		return distance / movingTime();
+	}
+
+	
+	public static ArrayList<TripPoint> getMovingTrip() {
+		
+		return new ArrayList<TripPoint>(movingTrip);
+	}
+	
+
+	}
+
+
+	
+	
