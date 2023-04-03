@@ -7,17 +7,19 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 
 import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class TripPointTest {
 	
-	@BeforeClass
+	@BeforeEach
 	void setup() throws FileNotFoundException, IOException {
 		TripPoint.readFile("triplog.csv");
 	}
 
 	@Test
 	void testHeuristic1() throws FileNotFoundException, IOException {
+
 		int stops = TripPoint.h1StopDetection();
 		assertEquals(226, stops);
 		ArrayList<TripPoint> moving = TripPoint.getMovingTrip();
@@ -30,7 +32,7 @@ class TripPointTest {
 	@Test
 	void testHeuristic2() throws FileNotFoundException, IOException {
 		int stops = TripPoint.h2StopDetection();
-		assertEquals(239, stops);
+		assertEquals(239, stops); 
 		ArrayList<TripPoint> moving = TripPoint.getMovingTrip();
 		assertEquals(35.211037, moving.get(0).getLat());
 		assertEquals(35.340107, moving.get(2).getLat());
